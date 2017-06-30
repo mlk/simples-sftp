@@ -1,0 +1,99 @@
+buildscript {
+    dependencies {
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:1.5.1.RELEASE"
+        classpath 'info.solidsoft.gradle.pitest:gradle-pitest-plugin:1.1.11'
+        classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.8.0"
+    }
+    repositories {
+        mavenCentral()
+    }
+}
+
+apply plugin: 'java'
+apply plugin: "info.solidsoft.pitest"
+apply plugin: 'maven'
+apply plugin: 'signing'
+apply plugin: 'io.codearte.nexus-staging'
+
+group = 'com.github.mlk'
+version = "1.0.${System.env.CIRCLE_BUILD_NUM}"
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+signing {
+    sign configurations.archives
+}
+
+
+dependencies {
+    compile 'com.hierynomus:sshj:0.21.1'
+    compile 'com.github.fommil:openssh:1.0'
+
+    compileOnly 'org.projectlombok:lombok:1.16.16'
+
+    testCompile 'org.apache.sshd:sshd-core:1.4.0'
+    testCompile 'com.github.mlk:assortmentofjunitrules:1.5.29'
+    testCompile 'org.assertj:assertj-core:3.6.2'
+}
+
+uploadArchives {
+    if(project.hasProperty("ossrhUsername")) {
+        repositories {
+            mavenDeployer {
+                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+                repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                    authentication(userName: ossrhUsername, password: ossrhPassword)
+                }
+
+                snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                    authentication(userName: ossrhUsername, password: ossrhPassword)
+                }
+
+                pom.project {
+                    name 'simples-sftp'
+                    packaging 'jar'
+                    description 'A wrapper around a wrapper around a wrapper around something that does sftp'
+                    url 'https://www.github.com/mlk/simples-sftp'
+
+                    scm {
+                        connection 'scm:git:https://www.github.com/mlk/simples-sftp/'
+                        url 'https://www.github.com/mlk/simples-sftp/'
+                    }
+
+                    licenses {
+                        license {
+                            name 'MIT License'
+                            url 'https://www.github.com/mlk/simples-sftp/LICENSE'
+                        }
+                    }
+
+                    developers {
+                        developer {
+                            id 'mlk'
+                            name 'Michael Lee'
+                            email 'pom@michael-lloyd-lee.me.uk'
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
