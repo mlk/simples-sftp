@@ -17,9 +17,12 @@ import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 import net.schmizz.sshj.userauth.keyprovider.KeyPairWrapper;
 import net.schmizz.sshj.xfer.FileSystemFile;
 
-/** A really basic SFTP client. */
+/**
+ * A really basic SFTP client.
+ */
 @Slf4j
 public class SftpClient {
+
   private final String host;
   private final int port;
   private final String username;
@@ -27,11 +30,13 @@ public class SftpClient {
   private final KeyPair privateKeyPair;
   private final Supplier<SSHClient> clientSupplier;
 
-  public SftpClient(String host, int port, String username, String hostFingerPrint, final KeyPair privateKeyPair) {
+  public SftpClient(String host, int port, String username, String hostFingerPrint,
+      final KeyPair privateKeyPair) {
     this(host, port, username, hostFingerPrint, privateKeyPair, SSHClient::new);
   }
 
-   SftpClient(String host, int port, String username, String hostFingerPrint, final KeyPair privateKeyPair, Supplier<SSHClient> clientSupplier) {
+  SftpClient(String host, int port, String username, String hostFingerPrint,
+      final KeyPair privateKeyPair, Supplier<SSHClient> clientSupplier) {
     this.host = host;
     this.port = port;
     this.username = username;
@@ -40,7 +45,8 @@ public class SftpClient {
     this.clientSupplier = clientSupplier;
   }
 
-  /** Does SFTP stuff then closes the connection
+  /**
+   * Does SFTP stuff then closes the connection
    *
    * NOTE: The calling application is responsible for clean up!
    *
@@ -50,7 +56,7 @@ public class SftpClient {
   public void doSftp(ThrowingConsumer<SFTPClient> doThis) throws IOException {
     final SSHClient ssh = clientSupplier.get();
 
-    if(hostFingerPrint.equals("OFF")) {
+    if (hostFingerPrint.equals("OFF")) {
       log.warn("HOST VERIFICATION IS OFF - TURN ON IN LIVE!");
       ssh.addHostKeyVerifier(new PromiscuousVerifier());
     } else {
@@ -67,14 +73,15 @@ public class SftpClient {
     } finally {
       try {
         ssh.disconnect();
-      } catch(IOException e) {
+      } catch (IOException e) {
         log.warn("Exception while disconnecting", e);
       }
     }
 
   }
 
-  /** Uploads the file
+  /**
+   * Uploads the file
    *
    * @param file The file to upload
    * @param target The file name of the target.
@@ -86,26 +93,32 @@ public class SftpClient {
     upload(file, target);
   }
 
-  /** Uploads the file
+  /**
+   * Uploads the file
    *
    * @param file The file to upload
    * @param target The file name of the target.
    * @throws IOException Any SFTP issue
    */
   public void upload(File file, String target) throws IOException {
-    doSftp(sftp -> sftp.put(new FileSystemFile(file), target));
+    doSftp(sftp -> {
+      sftp.getFileTransfer().setPreserveAttributes(false);
+      sftp.put(new FileSystemFile(file), target);
+    });
   }
 
-  /** Lists the a directory and then downloads all the files not filtered out.
+  /**
+   * Lists the a directory and then downloads all the files not filtered out.
    *
    * @param folder The folder to list
    * @param localStorage The location of the local storage (a folder)
-   * @param fileFilter A function that takes a list of files and returns a list of files you actually want.
+   * @param fileFilter A function that takes a list of files and returns a list of files you
+   * actually want.
    * @return A list of local files after they have been downloaded
-   * @throws IOException
    */
   public List<File> download(String folder, File localStorage,
-      Function<Collection<RemoteResourceInfo>, Collection<RemoteResourceInfo>> fileFilter) throws IOException {
+      Function<Collection<RemoteResourceInfo>, Collection<RemoteResourceInfo>> fileFilter)
+      throws IOException {
     List<File> files = new ArrayList<>();
 
     try {
@@ -130,12 +143,12 @@ public class SftpClient {
     return files;
   }
 
-  /** Download all files from the SFTP server
+  /**
+   * Download all files from the SFTP server
    *
    * @param folder The folder to download
    * @param localStorage The location of the local storage (a folder)
    * @return A list of local files after they have been downloaded
-   * @throws IOException
    */
   public List<File> downloadAll(String folder, File localStorage) throws IOException {
     return download(folder, localStorage, x -> x);
