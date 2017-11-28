@@ -19,8 +19,10 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.List;
+import net.schmizz.keepalive.KeepAlive;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.common.SecurityUtils;
+import net.schmizz.sshj.connection.Connection;
 import net.schmizz.sshj.sftp.FileAttributes;
 import net.schmizz.sshj.sftp.FileMode;
 import net.schmizz.sshj.sftp.FileMode.Type;
@@ -145,7 +147,11 @@ public class SftpClientTest {
 
     SSHClient sshClient = mock(SSHClient.class);
     SFTPClient sftpClient = mock(SFTPClient.class);
+    Connection connection = mock(Connection.class);
+    KeepAlive keepAlive = mock(KeepAlive.class);
     when(sshClient.newSFTPClient()).thenReturn(sftpClient);
+    when(sshClient.getConnection()).thenReturn(connection);
+    when(connection.getKeepAlive()).thenReturn(keepAlive);
     when(sftpClient.ls(any())).thenReturn(asList(
         passingRemoteFile, failingRemoteFile
         )
