@@ -23,7 +23,6 @@ import net.schmizz.sshj.xfer.FileSystemFile;
 @Slf4j
 public class SftpClient {
 
-  public static final int KEEP_ALIVE_INTERVAL = 30;
   private final String host;
   private final int port;
   private final String username;
@@ -65,8 +64,6 @@ public class SftpClient {
     }
 
     ssh.connect(host, port);
-    ssh.getConnection().getKeepAlive().setKeepAliveInterval(KEEP_ALIVE_INTERVAL);
-    log.debug("SSH KEEP_ALIVE_INTERVAL set to " + KEEP_ALIVE_INTERVAL);
     try {
       ssh.authPublickey(username, new KeyPairWrapper(privateKeyPair));
 
