@@ -49,32 +49,27 @@ public class SftpClient {
    * Does SFTP stuff then closes the connection
    *
    * NOTE: The calling application is responsible for clean up!
+   * Close method in {@link SSHClient} automatically call disconnect in case of finally block from try-catch
    *
    * @param doThis Stuff to do
    * @throws IOException When stuff goes wrong
    */
   public void doSftp(ThrowingConsumer<SFTPClient> doThis) throws IOException {
-    final SSHClient ssh = clientSupplier.get();
+    try (final SSHClient ssh = clientSupplier.get()) {
 
-    if (hostFingerPrint.equals("OFF")) {
-      log.warn("HOST VERIFICATION IS OFF - TURN ON IN LIVE!");
-      ssh.addHostKeyVerifier(new PromiscuousVerifier());
-    } else {
-      ssh.addHostKeyVerifier(hostFingerPrint);
-    }
+      if (hostFingerPrint.equals("OFF")) {
+        log.warn("HOST VERIFICATION IS OFF - TURN ON IN LIVE!");
+        ssh.addHostKeyVerifier(new PromiscuousVerifier());
+      } else {
+        ssh.addHostKeyVerifier(hostFingerPrint);
+      }
 
-    ssh.connect(host, port);
-    try {
+      ssh.connect(host, port);
+
       ssh.authPublickey(username, new KeyPairWrapper(privateKeyPair));
 
       try (SFTPClient sftp = ssh.newSFTPClient()) {
         doThis.accept(sftp);
-      }
-    } finally {
-      try {
-        ssh.disconnect();
-      } catch (IOException e) {
-        log.warn("Exception while disconnecting", e);
       }
     }
 

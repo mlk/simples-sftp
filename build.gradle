@@ -12,7 +12,6 @@ buildscript {
 apply plugin: 'java'
 apply plugin: "info.solidsoft.pitest"
 apply plugin: 'maven'
-apply plugin: 'signing'
 apply plugin: 'io.codearte.nexus-staging'
 
 group = 'com.github.mlk'
@@ -37,14 +36,19 @@ artifacts {
     archives javadocJar, sourcesJar
 }
 
-signing {
-    sign configurations.archives
+if (project.hasProperty("signing.keyId")) {
+    apply plugin: 'signing'
+    signing {
+        sign configurations.archives
+    }
 }
 
 
 dependencies {
     compile 'com.hierynomus:sshj:0.23.0'
     compile 'com.github.fommil:openssh:1.0'
+    compile "org.slf4j:slf4j-api:1.7.12"
+    compile "org.slf4j:slf4j-simple:1.7.12"
 
     compileOnly 'org.projectlombok:lombok:1.16.16'
 
